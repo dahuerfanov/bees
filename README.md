@@ -31,6 +31,16 @@ The training was done on a single GPU with 8GB VRAM, smaller ones are of course 
     * `git submodule add git@github.com:tteepe/CenterNet-pytorch-lightning.git lib`
     * `git submodule update --init --recursive`
     * `pip install -e lib/`
+    * Due to some librariy version conflicts, it's necessary to replace the import line
+
+      ```from DCN.dcn_v2 import DCN```
+
+      by
+
+      ```from mmcv.ops.deform_conv import DeformConv2d as DCN```
+
+      in the files `lib/CenterNet/models/backbones/resnet_dcn.py`and `lib/CenterNet/models/backbones/pose_dla_dcn.py`
+
 4. (Optional) for wandb logging: `wandb login`
 5. Start training with e.g.
 ```
