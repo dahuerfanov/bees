@@ -1,0 +1,19 @@
+name: bee_inference
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - imgaug
+  - python=3.10
+  - pytorch=2.1.0=py3.10_cpu_0
+  - torchvision=0.16.0=py310_cpu
+  - cpuonly
+  - opencv
+  - matplotlib
+  - numpy<2.0
+  - pyqt=5.15
+  - pip
+  - pip:
+    - mmcv==2.2.0
+

@@ -1,9 +1,9 @@
-from CenterNet.transforms import CategoryIdToClass, ImageAugmentation
-from CenterNet.transforms.sample import ComposeSample
 import imgaug.augmenters as iaa
 import torchvision
 
 from model.bee_center_sample import BeeCenterSample
+from model.transforms.image import ImageAugmentation
+from model.transforms.sample import CategoryIdToClass, ComposeSample
 
 
 def get_transforms(norm_mean, norm_std, valid_ids, max_objs, kernel_px):

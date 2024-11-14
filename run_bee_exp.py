@@ -74,7 +74,7 @@ def run():
     parser.add_argument("--pretrained_weights_path")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--num_workers", default=1, type=int)
-    parser.add_argument("--torchscript_output", type=str, default="model.pt",
+    parser.add_argument("--torchscript_output", type=str, default="trained_models/model.pt",
                         help="Output path for TorchScript model (default: model.pt)")
     parser = CenterNetBeeCenter.add_model_specific_args(parser)
     args = parser.parse_args()

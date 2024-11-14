@@ -3,7 +3,7 @@ import math
 import numpy as np
 import torch
 
-from CenterNet.utils.gaussian import draw_umich_gaussian, draw_msra_gaussian, gaussian_radius
+from model.utils.gaussian import draw_umich_gaussian, draw_msra_gaussian, gaussian_radius
 
 
 class BeeCenterSample:

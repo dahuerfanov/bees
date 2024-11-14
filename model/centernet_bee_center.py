@@ -7,50 +7,8 @@ import wandb
 
 from CenterNet import CenterNet
 from CenterNet.models.heads import CenterHead
-from CenterNet.utils.decode import _nms, _topk, _transpose_and_gather_feat, sigmoid_clamped
-from CenterNet.utils.losses import RegL1Loss, FocalLoss
-
-
-def ctdet_decode(heat, reg, K=100):
-    """Custom function: decodes heatmap and regression predictions into detections.
-
-    Args:
-        heat (torch.Tensor): Heatmap predictions of shape (batch, num_classes, height, width)
-        reg (torch.Tensor): Regression predictions of shape (batch, 2, height, width)
-        K (int): Maximum number of detections to return per image
-
-    Returns:
-        torch.Tensor: Detections tensor of shape (batch, K, 5) where each detection is
-            [x, y, score, class] and K is the max number of objects per image
-    """
-    batch, _, _, _ = heat.size()
-
-    # perform nms on heatmaps
-    heat = _nms(heat)
-
-    scores, inds, clses, ys, xs = _topk(heat, K=K)
-    reg = _transpose_and_gather_feat(reg, inds)
-    reg = reg.view(batch, K, 2)
-    xs = xs.view(batch, K, 1) + reg[:, :, 0:1]
-    ys = ys.view(batch, K, 1) + reg[:, :, 1:2]
-
-    clses = clses.view(batch, K, 1).float()
-    scores = scores.view(batch, K, 1)
-    centers = torch.cat([xs, ys], dim=2)
-    detections = torch.cat([centers, scores, clses], dim=2)
-
-    return detections
-
-
-def extract_detections(output, max_objs, down_ratio):
-    detections = ctdet_decode(
-        output["heatmap"].sigmoid_(),
-        output["regression"],
-        K=max_objs,
-    )
-    detections[:, :, :2] *= down_ratio  # Scale to input
-
-    return detections
+from utils.decode import extract_detections, sigmoid_clamped
+from utils.losses import RegL1Loss, FocalLoss
 
 
 class CenterNetBeeCenter(CenterNet):
