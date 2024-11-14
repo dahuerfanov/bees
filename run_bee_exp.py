@@ -71,6 +71,7 @@ def run():
     parser.add_argument("--dataset_root")
     parser.add_argument("--pretrained_weights_path")
     parser.add_argument("--batch_size", default=16, type=int)
+    parser.add_argument("--epochs", default=20, type=int)
     parser.add_argument("--num_workers", default=1, type=int)
     parser.add_argument("--exp_config_path", type=str, default="config/exp_config.yaml",
                         help="yaml config file containing exp constants like img dims")
@@ -156,7 +157,7 @@ def run():
     trainer = pl.Trainer(
         callbacks=callbacks,
         logger=logger,
-        max_epochs=20
+        max_epochs=args.epochs
     )
     trainer.fit(model, train_loader, val_loader)
 

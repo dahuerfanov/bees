@@ -1,0 +1,14 @@
+imgaug
+numpy<2.0
+torch==2.1.0
+torchvision==0.16.0
+opencv-python
+tqdm
+Pillow
+numba
+pycocotools
+mmcv==2.2.0
+pytorch-lightning==2.4.0
+wandb
+--extra-index-url https://download.pytorch.org/whl/cu118
+--find-links https://download.openmmlab.com/mmcv/dist/cu118/torch2.1/index.html
