@@ -7,8 +7,8 @@ import wandb
 
 from CenterNet import CenterNet
 from CenterNet.models.heads import CenterHead
-from utils.decode import extract_detections, sigmoid_clamped
-from utils.losses import RegL1Loss, FocalLoss
+from model.utils.decode import extract_detections, sigmoid_clamped
+from model.utils.losses import RegL1Loss, FocalLoss
 
 
 class CenterNetBeeCenter(CenterNet):
@@ -17,17 +17,19 @@ class CenterNetBeeCenter(CenterNet):
     This model is a variant of CenterNet specifically designed for detecting bee centers in images.
     It uses a single class (bee) and outputs both heatmaps and regression values to predict bee locations.
 
-    Class Attributes:
-        mean (list): Mean values for image normalization [0.408, 0.447, 0.470]
-        std (list): Standard deviation values for image normalization [0.289, 0.274, 0.278]
-        img_aspect_ratio (float): Expected aspect ratio of input images (3/4)
-        img_longer_side (int): Length in pixels of longer image side (500)
-        score_threshold (float): Confidence threshold for detections (0.51)
-        max_objs (int): Maximum number of objects to detect per image (100)
-        valid_ids (list): List of valid class IDs [1]
-        eps_correct_det (int): Maximum pixel distance for a detection to be considered correct (8)
-
     Args:
+        config (dict): Configuration dictionary containing model parameters:
+            image:
+                mean (list): Mean values for image normalization
+                std (list): Standard deviation values for image normalization
+                aspect_ratio (float): Expected aspect ratio of input images
+                longer_side (int): Length in pixels of longer image side
+            detection:
+                score_threshold (float): Confidence threshold for detections
+                max_objects (int): Maximum number of objects to detect per image
+                valid_object_ids (list): List of valid class IDs
+            post_process:
+                epsilon_correct_detection (int): Maximum pixel distance for a detection to be considered correct
         arch (str, optional): Backbone architecture name. Defaults to "res_18".
         learning_rate (float, optional): Initial learning rate. Defaults to 1e-4.
         learning_rate_milestones (list, optional): Epochs at which to decay learning rate. Defaults to None.
@@ -35,17 +37,9 @@ class CenterNetBeeCenter(CenterNet):
         off_weight (float, optional): Weight for offset regression loss. Defaults to 1.
     """
 
-    mean = [0.408, 0.447, 0.470]
-    std = [0.289, 0.274, 0.278]
-    img_aspect_ratio = 3. / 4
-    img_longer_side = 500
-    score_threshold = 0.51
-    max_objs = 100
-    valid_ids = [1]
-    eps_correct_det = 8 # in pxs
-
     def __init__(
         self,
+        config,
         arch="res_18",
         learning_rate=1e-4,
         learning_rate_milestones=None,
@@ -53,6 +47,16 @@ class CenterNetBeeCenter(CenterNet):
         off_weight=1,
     ):
         super().__init__(arch)
+
+        # Load config values
+        self.mean = config["image"]["mean"]
+        self.std = config["image"]["std"]
+        self.img_aspect_ratio = config["image"]["aspect_ratio"]
+        self.img_longer_side = config["image"]["longer_side"]
+        self.score_threshold = config["detection"]["score_threshold"]
+        self.max_objs = config["detection"]["max_objects"]
+        self.valid_ids = config["detection"]["valid_object_ids"]
+        self.eps_correct_det = config["post_process"]["epsilon_correct_detection"]
 
         self.num_classes = 1 # bee class only
         heads = {"heatmap": self.num_classes, "regression": 2}
@@ -80,13 +84,6 @@ class CenterNetBeeCenter(CenterNet):
     def forward(self, x):
         outputs = self.backbone(x)
 
-        """
-        rets = []
-        for head, output in zip(self.heads, outputs):
-            rets.append(head(output))
-
-        return rets
-        """
         # Modify to return only tensors/dicts of tensors
         result = {}
         for head, output in zip(self.heads, outputs):
@@ -186,6 +183,7 @@ class CenterNetBeeCenter(CenterNet):
             - Bee count error: Absolute difference between det and GT counts
         4. Logs metrics to wandb and generates visualization plots
         """
+
         batch_precision = []
         batch_recall = []
         batch_auc = []
@@ -297,6 +295,7 @@ class CenterNetBeeCenter(CenterNet):
             target_regression_mask (torch.Tensor): Mask indicating valid regression targets
             img_idx (int): Index of image to plot from batch
         """
+
         img_h, img_w = img[img_idx].shape[1:]
         roi_h = int(self.img_longer_side * self.img_aspect_ratio)
         roi_w = self.img_longer_side

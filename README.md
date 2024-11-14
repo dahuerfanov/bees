@@ -6,28 +6,52 @@ We want to count the number of bees flying around in order to monitor the hive. 
 of bees, along with ground truth labels containing dots at the centroids of each bee in the image. The goal of this
 challenge is to automate the process of counting bees in a given image.
 
-## Submission Details
+## Solution Description
 
-Your submission should include a test program that can be run to make predictions on new image, e.g.
+The model [CenterNet](https://arxiv.org/abs/1904.07850) was chosen as the base of the solution, after modifying its bounding-box-prediciton variant to the task of detecting bee centers and setting `resnet18` as its backbone. The implementation was based on [this repo](https://github.com/tteepe/CenterNet-pytorch-lightning/tree/main) that makes use of `pytorch-lighting` to simplify the code. The logging, model selection and evalation were done with `wandb`.
 
-    ./sample_solution.py <image file>
 
-* `image file` is an image, possibly with bees. Your model should predict how many bees are in this image.
+## Data Preparation
 
-Please include code on how you created your model and assessed its performance, along with some explanation
-on why you chose your method. You should also include some unit testing (it doesn't HAVE to be fully tested)
-to showcase an example of how you would unit test your algorithm/method/model in the real world. You may
-want to include other material such as a pdf or jupyter notebook in order to show your results.
+The data is processed by using the python files under `tools`. First, we extract the pixel ground truth points from the mask images and save them as 'txt' files with `read_gt_data.py`. Then, we parse those files to COCO format with `txt_to_coco.py`.
 
-## Evaluation
 
-Your challenge results will be evaluated based on the following criteria
-- model performance
-- code cleanliness, documentation, and testing
-- level of creativity / ingenuity of your solution
+## Training
 
-## Questions?
+### Requirements
 
-Feel free to email us with any questions you might have about the challenge.
+1. The training was done with CUDA 11.8, it's recommended to use the same
+2. For training and validation logging (as well as visualization), a `wandb` account
 
-Looking forward to your submission!
+The training was done on a single GPU with 8GB VRAM, smaller ones are of course usable.
+
+1. Create the training environment: `conda env create -f  environment.yaml`
+2. Activate it: `conda activate bees_env`
+3. Add the base repo as submodule:
+    * `git submodule add git@github.com:tteepe/CenterNet-pytorch-lightning.git lib`
+    * `git submodule update --init --recursive`
+4. (Optional) for wandb logging: `wandb login`
+5. Start training with e.g.
+```
+python run_bee_exp.py --dataset_root data/honeybee/ --learning_rate 0.0004
+```
+
+## Inference
+
+The Torchscript file of the trained model resides under `trained_models`. Follow these steps top use it directly:
+
+1. Create the inference environment: `conda env create -f  run_environment.yaml`
+2. Activate it: `conda activate bee_inference`
+3. Run inference on a bee input image: 
+```
+python sample_solution.py --model trained_models/model.pt --image
+```
+A visualization image with the bee counter will be saved as `bee_img.png`.
+
+
+## Testing
+
+To run the unit test, within the inference environment and from the repo root directory do:
+```
+python -m test.test_bee_detector
+```

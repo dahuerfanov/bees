@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import os
+import yaml
 
 from torch.utils.data import DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, Callback
@@ -74,16 +75,21 @@ def run():
     parser.add_argument("--pretrained_weights_path")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--num_workers", default=1, type=int)
+    parser.add_argument("--exp_config_path", type=str, default="config/exp_config.yaml",
+                        help="yaml config file containing exp constants like img dims")
     parser.add_argument("--torchscript_output", type=str, default="trained_models/model.pt",
                         help="Output path for TorchScript model (default: model.pt)")
     parser = CenterNetBeeCenter.add_model_specific_args(parser)
     args = parser.parse_args()
 
+    with open(args.exp_config_path, 'r') as file:
+        exp_config = yaml.safe_load(file)
+
     train_transform, valid_transform, _ = get_transforms(
-        norm_mean=CenterNetBeeCenter.mean,
-        norm_std=CenterNetBeeCenter.std,
-        valid_ids=CenterNetBeeCenter.valid_ids,
-        max_objs=CenterNetBeeCenter.max_objs,
+        norm_mean=exp_config["image"]["mean"],
+        norm_std=exp_config["image"]["std"],
+        valid_ids=exp_config["detection"]["valid_object_ids"],
+        max_objs=exp_config["detection"]["max_objects"],
         kernel_px=32
     )
 
@@ -116,7 +122,8 @@ def run():
     # ------------
     args.learning_rate_milestones = list(map(int, args.learning_rate_milestones.split(",")))
     model = CenterNetBeeCenter(
-        "res_18", args.learning_rate,
+        exp_config, "res_18", # backbone preferred as constant here
+        args.learning_rate,
         args.learning_rate_milestones,
     )
     if args.pretrained_weights_path:
@@ -156,7 +163,6 @@ def run():
     )
     trainer.fit(model, train_loader, val_loader)
 
-#os.environ['WANDB_DISABLED'] = 'true'
 
 if __name__ == "__main__":
     run()
