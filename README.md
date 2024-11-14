@@ -41,7 +41,7 @@ The training was done on a single GPU with 8GB VRAM, smaller ones are of course 
 
       in the files `lib/CenterNet/models/backbones/resnet_dcn.py`and `lib/CenterNet/models/backbones/pose_dla_dcn.py`
 
-4. (Optional) for wandb logging: `wandb login`
+4. wandb logging: `wandb login`
 5. Start training with e.g.
 ```
 python run_bee_exp.py --dataset_root data/honeybee/ --learning_rate 0.0004
