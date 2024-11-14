@@ -22,6 +22,10 @@ The data is processed by using the python files under `tools`. First, we extract
 
 1. The training was done with CUDA 11.8, it's recommended to use the same
 2. For training and validation logging (as well as visualization), a `wandb` account
+3. The data under `<dataset root>` should contain `train`, `val` and `test` subdirectories and each subdirectory should have:
+   - `img` folder containing the images
+   - `<subdirectory name>_coco.json` annotation file in COCO format with point center of bees
+   - Annotations should have `category_id=1` for bees
 
 The training was done on a single GPU with 8GB VRAM, smaller ones are of course usable.
 
