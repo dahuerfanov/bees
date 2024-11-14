@@ -50,7 +50,7 @@ The Torchscript file of the trained model resides under `trained_models`. Follow
 2. Activate it: `conda activate bee_inference`
 3. Run inference on a bee input image: 
 ```
-python sample_solution.py --model trained_models/model.pt --image
+python sample_solution.py --model trained_models/model.pt --image <path/to/input/image>
 ```
 A visualization image with the bee counter will be saved as `bee_img.png`:
 
