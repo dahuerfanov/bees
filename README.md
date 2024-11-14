@@ -19,24 +19,19 @@ The Torchscript file of the trained model resides under `trained_models`. Follow
 2. Activate it: `conda activate bee_inference`
 3. Run inference on a bee input image: 
 ```
-python sample_solution.py --model trained_models/model.pt --image <path/to/input/image>
+python solution.py --model trained_models/model.pt --image <path/to/input/image>
 ```
 A visualization image with the bee counter will be saved as `bee_img.png`:
 
 ![bee_img](https://github.com/user-attachments/assets/8503f7d6-0d0f-4b89-b824-05fdb2648e86)
 
 
-## Testing
+## Unit Testing
 
-To run the unit test, within the inference environment and from the repo root directory do:
+To run the unit tests, within the inference environment and from the repo root directory do:
 ```
 python -m test.test_bee_detector
 ```
-
-## Data Preparation
-
-The data is processed by using the python files under `tools`. First, we extract the pixel ground truth points from the mask images and save them as 'txt' files with `read_gt_data.py`. Then, we parse those files to COCO format with `txt_to_coco.py`.
-
 
 ## Training
 
@@ -51,6 +46,12 @@ The data is processed by using the python files under `tools`. First, we extract
 
 The training was done on a single GPU with 8GB VRAM, smaller ones are of course usable.
 
+### Instructions
+
+ 0. Generate COCO files from list splits under the folder `data/honeybee` by simply running
+   ```
+   python tools/prepare_data_from_file_lists.py --data_root data/honeybee/
+   ```
 1. Create the training environment: `conda env create -f  environment.yaml`
 2. Activate it: `conda activate bees_env`
 3. Add the base repo as submodule:
