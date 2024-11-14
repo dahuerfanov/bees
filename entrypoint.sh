@@ -9,5 +9,5 @@ echo "Received epochs: $EPOCHS"
 
 python3 tools/prepare_data_from_file_lists.py --data_root /data
 if [ $? -eq 0 ]; then
-    python3 run_bee_exp.py --dataset_root /data --learning_rate "$LR" --batch_size "$BS" --epochs "$EPOCHS"
+    python3 run_bee_exp.py --dataset_root /data --learning_rate "$LR" --batch_size "$BS" --epochs "$EPOCHS" --torchscript_output /trained_models/model.pt
 fi
