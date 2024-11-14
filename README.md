@@ -30,6 +30,7 @@ The training was done on a single GPU with 8GB VRAM, smaller ones are of course 
 3. Add the base repo as submodule:
     * `git submodule add git@github.com:tteepe/CenterNet-pytorch-lightning.git lib`
     * `git submodule update --init --recursive`
+    * `pip install -e lib/`
 4. (Optional) for wandb logging: `wandb login`
 5. Start training with e.g.
 ```
