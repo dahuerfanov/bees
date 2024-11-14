@@ -36,7 +36,7 @@ The training was done on a single GPU with 8GB VRAM, smaller ones are of course 
 python run_bee_exp.py --dataset_root data/honeybee/ --learning_rate 0.0004
 ```
 
-Here we can see how the model evolves during training on validation samples:
+Here we can see how the model evolves during training on validation samples. Red dots are model detections, green dots are ground truth points and the heat map represents detection confidence (darker meaning more confident):
 
 ![val_viz](https://github.com/user-attachments/assets/27bd6309-88a0-4c9f-89c3-05222cfd649f)
 
