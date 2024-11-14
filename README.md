@@ -61,7 +61,7 @@ docker run \
     -e WANDB_ENTITY=<wandb_entity> \
     bee_docker:latest 0.0004 16
 ```
-Adjust ` <dataset_root>`, `<folder_to_save_weights>`, `<wandb_api_key>`, `<wandb_project>` and `<wandb_entity>` to your convinience. The args `0.0004` and `16` stand for learning rate and bartch size respectively.
+Adjust the absolute paths `<dataset_root>` and `<folder_to_save_weights>` as well as the `wandb` enviroment variables `<wandb_api_key>`, `<wandb_project>` and `<wandb_entity>` to your convinience. The args `0.0004` and `16` stand for learning rate and bartch size respectively.
 
 
 Here we can see how the model evolves during training on validation samples. Red dots are model detections, green dots are ground truth points and the heat map represents detection confidence (darker meaning more confident):
