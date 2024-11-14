@@ -36,6 +36,11 @@ The training was done on a single GPU with 8GB VRAM, smaller ones are of course 
 python run_bee_exp.py --dataset_root data/honeybee/ --learning_rate 0.0004
 ```
 
+Here we can see how the model evolves during training on validation samples:
+
+![val_viz](https://github.com/user-attachments/assets/27bd6309-88a0-4c9f-89c3-05222cfd649f)
+
+
 ## Inference
 
 The Torchscript file of the trained model resides under `trained_models`. Follow these steps top use it directly:
@@ -46,7 +51,9 @@ The Torchscript file of the trained model resides under `trained_models`. Follow
 ```
 python sample_solution.py --model trained_models/model.pt --image
 ```
-A visualization image with the bee counter will be saved as `bee_img.png`.
+A visualization image with the bee counter will be saved as `bee_img.png`:
+
+![bee_img](https://github.com/user-attachments/assets/8503f7d6-0d0f-4b89-b824-05fdb2648e86)
 
 
 ## Testing
