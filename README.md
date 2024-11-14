@@ -39,10 +39,7 @@ python -m test.test_bee_detector
 
 1. The training was done with CUDA 11.8, it's recommended to use the same
 2. For training and validation logging (as well as visualization), a `wandb` account
-3. The data under `<dataset root>` should contain `train`, `val` and `test` subdirectories and each subdirectory should have:
-   - `img` folder containing the images
-   - `<subdirectory name>_coco.json` annotation file in COCO format with point center of bees
-   - Annotations should have `category_id=1` for bees
+3. The data under `<dataset root>` should contain `img` and `gt-dot` subdirectories with images and ground truth dots, as well as the file lists for the data split.
 
 The training was done on a single GPU with 8GB VRAM, smaller ones are of course usable.
 
