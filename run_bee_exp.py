@@ -2,19 +2,59 @@ from argparse import ArgumentParser
 import os
 
 from torch.utils.data import DataLoader
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
+from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, Callback
 from pytorch_lightning.loggers import WandbLogger
 from torchvision.datasets import CocoDetection
 import imgaug as ia
 import pytorch_lightning as pl
+import torch
 
 from model.bee_augmentations import get_transforms
 from model.centernet_bee_center import CenterNetBeeCenter
 
 
+class ExportTorchScriptCallback(Callback):
+    """Callback to export model to TorchScript after training"""
+    def __init__(self, output_path):
+        super().__init__()
+        self.output_path = output_path
+        
+    def on_train_end(self, trainer, pl_module):
+        # Load best checkpoint
+        best_model_path = trainer.checkpoint_callback.best_model_path
+        if best_model_path:
+            # Load the checkpoint directly into the current model
+            checkpoint = torch.load(best_model_path)
+            pl_module.load_state_dict(checkpoint['state_dict'])
+            
+            # Prepare model for export
+            pl_module.eval()
+            pl_module = pl_module.to('cpu')
+            example_input = torch.randn(1, 3, 512, 512)
+            
+            class ModelWrapper(torch.nn.Module):
+                def __init__(self, model):
+                    super().__init__()
+                    self.model = model
+
+                def forward(self, x):
+                    output = self.model(x)
+                    # Return a tuple instead of a dict
+                    return output["heatmap"], output["regression"]
+            
+            wrapped_model = ModelWrapper(pl_module)
+            # Add strict=False to allow the trace
+            scripted_model = torch.jit.trace(wrapped_model, example_input, strict=False)
+            scripted_model.save(self.output_path)
+            print(f"Model exported to {self.output_path}")
+        else:
+            print("No best model checkpoint found. TorchScript export skipped.")
+
+
 def run():
     """
-    Trains a CenterNet model on bee center detection data.
+    Trains a CenterNet model on bee center detection data and export a torchscript file with
+    the best found checkpoint.
     
     Expected data format:
     - Dataset root should contain train/, val/ and test/ subdirectories
@@ -26,6 +66,19 @@ def run():
     pl.seed_everything(5318008)
     ia.seed(107734)
 
+    # ------------
+    # args
+    # ------------
+    parser = ArgumentParser()
+    parser.add_argument("--dataset_root")
+    parser.add_argument("--pretrained_weights_path")
+    parser.add_argument("--batch_size", default=16, type=int)
+    parser.add_argument("--num_workers", default=1, type=int)
+    parser.add_argument("--torchscript_output", type=str, default="model.pt",
+                        help="Output path for TorchScript model (default: model.pt)")
+    parser = CenterNetBeeCenter.add_model_specific_args(parser)
+    args = parser.parse_args()
+
     train_transform, valid_transform, _ = get_transforms(
         norm_mean=CenterNetBeeCenter.mean,
         norm_std=CenterNetBeeCenter.std,
@@ -33,18 +86,6 @@ def run():
         max_objs=CenterNetBeeCenter.max_objs,
         kernel_px=32
     )
-
-    # ------------
-    # args
-    # ------------
-    parser = ArgumentParser()
-    parser.add_argument("--dataset_root")
-
-    parser.add_argument("--pretrained_weights_path")
-    parser.add_argument("--batch_size", default=16, type=int)
-    parser.add_argument("--num_workers", default=1, type=int)
-    parser = CenterNetBeeCenter.add_model_specific_args(parser)
-    args = parser.parse_args()
 
     coco_train = CocoDetection(
         os.path.join(args.dataset_root, "train", "img"),
@@ -105,6 +146,7 @@ def run():
             save_top_k=1
         ),
         LearningRateMonitor(logging_interval="epoch"),
+        ExportTorchScriptCallback(args.torchscript_output)
     ]
 
     trainer = pl.Trainer(
@@ -113,12 +155,6 @@ def run():
         max_epochs=20
     )
     trainer.fit(model, train_loader, val_loader)
-
-    # ------------
-    # testing
-    # ------------
-    #trainer.test(dataloaders=test_loader, ckpt_path="best")
-
 
 #os.environ['WANDB_DISABLED'] = 'true'
 

@@ -61,6 +61,15 @@ def get_transforms(norm_mean, norm_std, valid_ids, max_objs, kernel_px):
         ]
     )
 
-    test_transform = ImageAugmentation(img_transforms=torchvision.transforms.ToTensor())
+    test_transform = ImageAugmentation(
+                iaa.Sequential([
+                    iaa.Resize({"shorter-side": "keep-aspect-ratio", "longer-side": 500}),
+                    iaa.PadToFixedSize(width=512, height=512, position="center"),
+                ]),
+                torchvision.transforms.Compose([
+                    torchvision.transforms.ToTensor(),
+                    torchvision.transforms.Normalize(norm_mean, norm_std, inplace=True),
+                ]),
+            )
 
     return train_transform, valid_transform, test_transform

@@ -42,6 +42,17 @@ def ctdet_decode(heat, reg, K=100):
     return detections
 
 
+def extract_detections(output, max_objs, down_ratio):
+    detections = ctdet_decode(
+        output["heatmap"].sigmoid_(),
+        output["regression"],
+        K=max_objs,
+    )
+    detections[:, :, :2] *= down_ratio  # Scale to input
+
+    return detections
+
+
 class CenterNetBeeCenter(CenterNet):
     """CenterNet model adapted for bee center detection.
 
@@ -111,12 +122,26 @@ class CenterNetBeeCenter(CenterNet):
     def forward(self, x):
         outputs = self.backbone(x)
 
+        """
         rets = []
         for head, output in zip(self.heads, outputs):
             rets.append(head(output))
 
         return rets
+        """
+        # Modify to return only tensors/dicts of tensors
+        result = {}
+        for head, output in zip(self.heads, outputs):
+            head_outputs = head(output)
+            # Merge all head outputs into single dict
+            for k, v in head_outputs.items():
+                if k not in result:
+                    result[k] = v
+                else:
+                    result[k] = v
+        return result
 
+    @torch.jit.ignore
     def loss(self, outputs, target):
         hm_loss, off_loss = 0, 0
         num_stacks = len(outputs)
@@ -144,13 +169,29 @@ class CenterNetBeeCenter(CenterNet):
         }
         return loss, loss_stats
 
+    @torch.jit.ignore
+    def training_step(self, batch, batch_idx):
+        img, target = batch
+        outputs = self(img)
+        outputs_list = [outputs]
+        loss, loss_stats = self.loss(outputs_list, target)
+
+        self.log(f"train_loss", loss, on_epoch=True)
+
+        for key, value in loss_stats.items():
+            self.log(f"train/{key}", value)
+
+        return loss
+
+    @torch.jit.ignore
     def validation_step(self, batch, batch_idx):
         img, target = batch
         outputs = self(img)
-        loss, loss_stats = self.loss(outputs, target)
+        outputs_list = [outputs]
+        loss, loss_stats = self.loss(outputs_list, target)
     
-        detections = self.extract_detections(outputs[0])
-        self.report_metrics(img, detections, outputs[0]["heatmap"], 
+        detections = extract_detections(outputs_list[0], self.max_objs, self.down_ratio)
+        self.report_metrics(img, detections, outputs_list[0]["heatmap"], 
                             target["original_pts"], target["regression_mask"])
 
         self.log(f"val_loss", loss, on_epoch=True, sync_dist=True)
@@ -160,17 +201,7 @@ class CenterNetBeeCenter(CenterNet):
 
         return {"loss": loss, "loss_stats": loss_stats}
 
-    def extract_detections(self, output):
-        detections = ctdet_decode(
-            output["heatmap"].sigmoid_(),
-            output["regression"],
-            K=self.max_objs,
-        )
-        detections = detections.cpu().detach().squeeze()
-        detections[:, :, :2] *= self.down_ratio  # Scale to input
-
-        return detections
-
+    @torch.jit.ignore
     def report_metrics(self, img, detections, heatmap, target_regression, target_regression_mask):
         """Calculate and log detection metrics for bee center detection.
         
@@ -205,6 +236,10 @@ class CenterNetBeeCenter(CenterNet):
         roi_x, roi_y = 0, 0
         roi_w, roi_h = 0, 0
         
+        detections = detections.cpu()
+        target_regression = target_regression.cpu()
+        target_regression_mask = target_regression_mask.cpu()
+
         # Calculate metrics for each sample in batch
         for batch_idx in range(len(img)):
             # Get ROI boundaries for current image
@@ -217,8 +252,8 @@ class CenterNetBeeCenter(CenterNet):
             # Get high confidence detections within ROI
             high_conf_dets = []
             for det in detections[batch_idx]:
-                x, y = det[0], det[1]
-                score = det[2]
+                x, y = det[0].item(), det[1].item()
+                score = det[2].item()
                 
                 if (score > self.score_threshold and
                     roi_x <= x < roi_x + roi_w and
@@ -227,8 +262,8 @@ class CenterNetBeeCenter(CenterNet):
             
             # Get ground truth points
             gt_points = []
-            curr_target_regression = target_regression[batch_idx].cpu().numpy()
-            curr_target_mask = target_regression_mask[batch_idx].cpu().numpy()
+            curr_target_regression = target_regression[batch_idx].numpy()
+            curr_target_mask = target_regression_mask[batch_idx].numpy()
             
             for i in range(len(curr_target_mask)):
                 if curr_target_mask[i]:
@@ -242,14 +277,14 @@ class CenterNetBeeCenter(CenterNet):
             loc_error, num_loc_error = 0, 0
             matched_dets = set()
             
-            for gt_idx, gt_point in enumerate(gt_points):
+            for gt_point in gt_points:
                 min_dist = float('inf')
                 best_det_idx = None
                 
                 for det_idx, det_point in enumerate(high_conf_dets):
                     if det_idx not in matched_dets:
                         dist = np.sqrt((gt_point[0] - det_point[0])**2 + 
-                                     (gt_point[1] - det_point[1])**2)
+                                       (gt_point[1] - det_point[1])**2)
                         if dist <= self.eps_correct_det and dist < min_dist:
                             min_dist = dist
                             best_det_idx = det_idx
@@ -291,6 +326,7 @@ class CenterNetBeeCenter(CenterNet):
         self.plot_detection_results(img, detections, heatmap, target_regression,
                                     target_regression_mask, 0)
 
+    @torch.jit.ignore
     def plot_detection_results(self, img, detections, heatmap, target_regression,
                                target_regression_mask, img_idx):
         """Plot detection results for a single image
