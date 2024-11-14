@@ -1,12 +1,34 @@
 import math
 
-import torch
 import numpy as np
+import torch
 
 from CenterNet.utils.gaussian import draw_umich_gaussian, draw_msra_gaussian, gaussian_radius
 
 
 class BeeCenterSample:
+    """Class for sampling augmentations on images and targets, adapted from bboxes to only points.
+
+    This class processes bee center annotations to generate the required training targets for CenterNet,
+    including heatmaps and regression values. It handles scaling coordinates between input and output
+    resolutions and applies Gaussian kernels around center points.
+
+    Args:
+        down_ratio (int, optional): Factor by which the input is downsampled. Defaults to 4.
+        num_classes (int, optional): Number of object classes. Defaults to 1.
+        max_objects (int, optional): Maximum number of objects per image. Defaults to 128.
+        kernel_px (int, optional): Size of Gaussian kernel in pixels. Defaults to 30.
+        gaussian_type (str, optional): Type of Gaussian kernel ("umich" or "msra"). Defaults to "umich".
+
+    The class generates the following targets:
+        - heatmap: Gaussian peaks centered on bee locations
+        - regression: Sub-pixel offset from quantized center points
+        - regression_mask: Mask indicating valid regression targets
+        - indices: Linear indices of center points in flattened output
+        - width_height: Placeholder for object sizes (unused for points)
+        - original_pts: Original center points normalized to [0,1]
+    """
+
     def __init__(
         self,
         down_ratio=4,

@@ -3,7 +3,7 @@ from CenterNet.transforms.sample import ComposeSample
 import imgaug.augmenters as iaa
 import torchvision
 
-from bee_center_sample import BeeCenterSample
+from model.bee_center_sample import BeeCenterSample
 
 
 def get_transforms(norm_mean, norm_std, valid_ids, max_objs, kernel_px):
