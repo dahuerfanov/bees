@@ -31,7 +31,7 @@ The training was done on a single GPU with 8GB VRAM, smaller ones are of course 
     * `git submodule add git@github.com:tteepe/CenterNet-pytorch-lightning.git lib`
     * `git submodule update --init --recursive`
     * `pip install -e lib/`
-    * Due to some librariy version conflicts, it's necessary to replace the import line
+    * Due to some library versions conflict, it's necessary to replace the import line
 
       ```from DCN.dcn_v2 import DCN```
 
