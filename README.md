@@ -33,43 +33,36 @@ To run the unit tests, within the inference environment and from the repo root d
 python -m test.test_bee_detector
 ```
 
-## Training
+## Training with Docker
 
 ### Requirements
 
-1. The training was done with CUDA 11.8, it's recommended to use the same
-2. For training and validation logging (as well as visualization), a `wandb` account
+1. The training was done on a single GPU with 8GB VRAM, smaller ones are of course usable.
+2. For training and validation logging (as well as visualization), a `wandb` account.
 3. The data under `<dataset root>` should contain `img` and `gt-dot` subdirectories with images and ground truth dots, as well as the file lists for the data split.
 
-The training was done on a single GPU with 8GB VRAM, smaller ones are of course usable.
 
 ### Instructions
+1. Build the docker:
 
- 0. Generate COCO files from list splits under the folder `data/honeybee` by simply running
-   ```
-   python tools/prepare_data_from_file_lists.py --data_root data/honeybee/
-   ```
-1. Create the training environment: `conda env create -f  environment.yaml`
-2. Activate it: `conda activate bees_env`
-3. Add the base repo as submodule:
-    * `git submodule add git@github.com:tteepe/CenterNet-pytorch-lightning.git lib`
-    * `git submodule update --init --recursive`
-    * `pip install -e lib/`
-    * Due to some library versions conflict, it's necessary to replace the import line
-
-      ```from DCN.dcn_v2 import DCN```
-
-      by
-
-      ```from mmcv.ops.deform_conv import DeformConv2d as DCN```
-
-      in the files `lib/CenterNet/models/backbones/resnet_dcn.py`and `lib/CenterNet/models/backbones/pose_dla_dcn.py`
-
-4. wandb logging: `wandb login`
-5. Start training with e.g.
 ```
-python run_bee_exp.py --dataset_root data/honeybee/ --learning_rate 0.0004
+docker build -t bee_docker .
 ```
+2. Run the container:
+```
+docker run \
+    --shm-size=8g \
+    --gpus all \
+    --net=host \
+    -v <dataset_root>:/data \
+    -v <folder_to_save_weights>:/trained_models \
+    -e WANDB_API_KEY=<wandb_api_key> \
+    -e WANDB_PROJECT=<wandb_project> \
+    -e WANDB_ENTITY=<wandb_entity> \
+    bee_docker:latest 0.0004 16
+```
+Adjust ` <dataset_root>`, `<folder_to_save_weights>`, `<wandb_api_key>`, `<wandb_project>` and `<wandb_entity>` to your convinience. The args `0.0004` and `16` stand for learning rate and bartch size respectively.
+
 
 Here we can see how the model evolves during training on validation samples. Red dots are model detections, green dots are ground truth points and the heat map represents detection confidence (darker meaning more confident):
 
