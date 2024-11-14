@@ -58,11 +58,8 @@ def run():
     the best found checkpoint.
     
     Expected data format:
-    - Dataset root should contain train/, val/ and test/ subdirectories
-    - Each subdirectory should have:
-        - img/ folder containing the images
-        - *_coco.json annotation file in COCO format with bounding boxes around individual bees
-        - Annotations should have category_id=1 for bees
+    - Dataset root should contain train_coco.json, val_coco.json and test_coco.json files
+    - Dataset root should contain the folder img with samples
     """
     pl.seed_everything(5318008)
     ia.seed(107734)
@@ -94,14 +91,14 @@ def run():
     )
 
     coco_train = CocoDetection(
-        os.path.join(args.dataset_root, "train", "img"),
-        os.path.join(args.dataset_root, "train", "train_coco.json"),
+        os.path.join(args.dataset_root, "img"),
+        os.path.join(args.dataset_root, "train_coco.json"),
         transforms=train_transform,
     )
 
     coco_val = CocoDetection(
-        os.path.join(args.dataset_root, "val", "img"),
-        os.path.join(args.dataset_root, "val", "val_coco.json"),
+        os.path.join(args.dataset_root, "img"),
+        os.path.join(args.dataset_root, "val_coco.json"),
         transforms=valid_transform,
     )
 
