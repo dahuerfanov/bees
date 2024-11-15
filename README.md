@@ -30,7 +30,7 @@ A visualization image with the bee counter will be saved as `bee_img.png`:
 
 To run the unit tests, within the inference environment and from the repo root directory do:
 ```
-python -m test.test_bee_detector
+python -m unittest discover -s test -p 'test_*.py'
 ```
 
 ## Training with Docker
@@ -59,7 +59,7 @@ docker run \
     -e WANDB_API_KEY=<wandb_api_key> \
     -e WANDB_PROJECT=<wandb_project> \
     -e WANDB_ENTITY=<wandb_entity> \
-    bee_docker:latest 0.0004 16 20
+    bee_docker:latest 0.00025 16 18
 ```
 Adjust the absolute paths `<dataset_root>` and `<folder_to_save_weights>` as well as the `wandb` enviroment variables `<wandb_api_key>`, `<wandb_project>` and `<wandb_entity>` to your convinience. The last three args stand for learning rate, batch size and train epochs respectively.
 
