@@ -23,7 +23,7 @@ python solution.py --model trained_models/model.pt --image <path/to/input/image>
 ```
 A visualization image with the bee counter will be saved as `bee_img.png`:
 
-![bee_img](https://github.com/user-attachments/assets/8503f7d6-0d0f-4b89-b824-05fdb2648e86)
+![bee_img](https://github.com/user-attachments/assets/ab240951-500f-47b9-ba53-5beaaf659712)
 
 
 ## Unit Testing
