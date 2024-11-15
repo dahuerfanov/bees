@@ -67,3 +67,29 @@ Adjust the absolute paths `<dataset_root>` and `<folder_to_save_weights>` as wel
 Here we can see how the model evolves during training on validation samples. Red dots are model detections, green dots are ground truth points and the heat map represents detection confidence (darker meaning more confident):
 
 ![val_viz](https://github.com/user-attachments/assets/27bd6309-88a0-4c9f-89c3-05222cfd649f)
+
+## Testing the model
+
+You can use the same docker image as for training:
+
+```
+docker run \
+  --shm-size=8g \
+  --gpus all \
+  --net=host \
+  --entrypoint python3 \
+  -v <dataset_root>:/data \
+  -v <folder_of_weights>:/trained_models \
+  bee_docker:latest \
+  test_model.py \
+  --dataset_root /data \
+  --model_weights_path /trained_models/model.pth
+```
+
+with your specific absolute paths `<dataset_root>` and `<folder_of_weights>`. 
+
+The chosed model reported the following metrics on the test split:
+
+![image](https://github.com/user-attachments/assets/764a502c-4579-4a96-8245-a61831ec1527)
+
+
