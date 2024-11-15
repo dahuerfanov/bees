@@ -15,7 +15,7 @@ from model.centernet_bee_center import CenterNetBeeCenter
 
 
 class ExportTorchScriptCallback(Callback):
-    """Callback to export model to TorchScript after training"""
+    """Callback to export model to TorchScript and state dict after training"""
     def __init__(self, output_path):
         super().__init__()
         self.output_path = output_path
@@ -48,14 +48,18 @@ class ExportTorchScriptCallback(Callback):
             scripted_model = torch.jit.trace(wrapped_model, example_input, strict=False)
             scripted_model.save(self.output_path)
             print(f"Model exported to {self.output_path}")
+            
+            # Save state dict
+            state_dict_path = self.output_path.replace('.pt', '.pth')
+            torch.save(pl_module.state_dict(), state_dict_path)
+            print(f"Model state dict saved to {state_dict_path}")
         else:
-            print("No best model checkpoint found. TorchScript export skipped.")
-
+            print("No best model checkpoint found. Model exports skipped.")
 
 def run(args):
     """
-    Trains a CenterNet model on bee center detection data and export a torchscript file with
-    the best found checkpoint.
+    Trains a CenterNet model on bee center detection data and export the state dictionary (.pth)
+    and a torchscript file (.pt) with the best found checkpoint.
     
     Expected data format:
     - Dataset root should contain train_coco.json, val_coco.json and test_coco.json files

@@ -151,6 +151,15 @@ class CenterNetBeeCenter(CenterNet):
             self.log(f"val/{name}", value, on_epoch=True, sync_dist=True)
 
         return {"loss": loss, "loss_stats": loss_stats}
+    
+    @torch.jit.ignore
+    def test_step(self, batch, batch_idx):
+        img, target = batch
+        outputs = self(img)
+    
+        detections = extract_detections(outputs, self.max_objs, self.down_ratio)
+        self.report_metrics(img, detections, outputs["heatmap"], 
+                            target["original_pts"], target["regression_mask"])
 
     @torch.jit.ignore
     def report_metrics(self, img, detections, heatmap, target_regression, target_regression_mask):
@@ -348,8 +357,9 @@ class CenterNetBeeCenter(CenterNet):
         ax1.legend()
         plt.tight_layout()
         
-        # Log to wandb
-        self.logger.experiment.log({
-            f"val_detections/val_img": wandb.Image(fig)
-        })
+        # Log to wandb if logger supports it (for testing phase)
+        if hasattr(self.logger.experiment, 'log'):
+            self.logger.experiment.log({
+                f"val_detections/val_img": wandb.Image(fig)
+            })
         plt.close()

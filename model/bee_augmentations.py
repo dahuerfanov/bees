@@ -61,7 +61,9 @@ def get_transforms(norm_mean, norm_std, valid_ids, max_objs, kernel_px):
         ]
     )
 
-    test_transform = ImageAugmentation(
+    test_transform = ComposeSample(
+        [
+            ImageAugmentation(
                 iaa.Sequential([
                     iaa.Resize({"shorter-side": "keep-aspect-ratio", "longer-side": 500}),
                     iaa.PadToFixedSize(width=512, height=512, position="center"),
@@ -70,6 +72,10 @@ def get_transforms(norm_mean, norm_std, valid_ids, max_objs, kernel_px):
                     torchvision.transforms.ToTensor(),
                     torchvision.transforms.Normalize(norm_mean, norm_std, inplace=True),
                 ]),
-            )
+            ),
+            CategoryIdToClass(valid_ids),
+            BeeCenterSample(num_classes=1, max_objects=max_objs, kernel_px=32),
+        ]
+    )
 
     return train_transform, valid_transform, test_transform
