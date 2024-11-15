@@ -19,36 +19,27 @@ def read_config(config_path):
     return config
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Run inference with exported CenterNetBeeCenter model')
-    parser.add_argument('--model', type=str, default="trained_models/model.pt",
-                        help='Path to TorchScript model file (.pt)')
-    parser.add_argument('--config_path', type=str, default="config/exp_config.yaml",
-                        help='Path to TorchScript model file (.pt)')
-    parser.add_argument('--image', type=str, required=True,
-                        help='Path to input image file')
-    args = parser.parse_args()
-
+def count_bees(model_path, config_path, image_path):
     # Check if config file exists
-    if not os.path.exists(args.config_path):
-        print(f"Error: Config file not found at {args.config_path}")
+    if not os.path.exists(config_path):
+        print(f"Error: Config file not found at {config_path}")
         return
-    config = read_config(args.config_path)
+    config = read_config(config_path)
 
     # Check if model file exists
-    if not os.path.exists(args.model):
-        print(f"Error: Model file not found at {args.model}")
+    if not os.path.exists(model_path):
+        print(f"Error: Model file not found at {model_path}")
         return
-    model = torch.jit.load(args.model)
+    model = torch.jit.load(model_path)
     model.eval()
 
     # Check if image file exists
-    if not os.path.exists(args.image):
-        print(f"Error: Image file not found at {args.image}")
+    if not os.path.exists(image_path):
+        print(f"Error: Image file not found at {image_path}")
         return
-    img = cv2.imread(args.image)
+    img = cv2.imread(image_path)
     if img is None:
-        print(f"Error: Could not read image at {args.image}")
+        print(f"Error: Could not read image at {image_path}")
         return
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -125,6 +116,23 @@ def main():
     plt.tight_layout()
     plt.savefig('bee_img.png')
     plt.close()
+    print(f"Visualization image 'bee_img.png' saved under repo root")
+
+    return bee_count
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Run inference with exported CenterNetBeeCenter model')
+    parser.add_argument('--model', type=str, default="trained_models/model.pt",
+                        help='Path to TorchScript model file (.pt)')
+    parser.add_argument('--config_path', type=str, default="config/exp_config.yaml",
+                        help='Path to TorchScript model file (.pt)')
+    parser.add_argument('--image', type=str, required=True,
+                        help='Path to input image file')
+    args = parser.parse_args()
+
+    bee_count = count_bees(args.model, args.config_path, args.image)
+    print(f"Number of bees detected: {bee_count}")
 
 
 if __name__ == '__main__':
