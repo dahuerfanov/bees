@@ -1,3 +1,18 @@
+"""Tests for the bee detector model.
+
+This module contains unit tests for the bee detector model, testing:
+- Model loading and configuration
+- Output shape validation 
+- Detection extraction from heatmaps
+- Score thresholding and coordinate validation
+
+The tests verify that:
+1. The model loads correctly with the expected config
+2. Model outputs have the correct shapes and formats
+3. Detection extraction produces valid detections
+4. Score thresholding filters detections appropriately
+"""
+
 import unittest
 import os
 import yaml

@@ -20,9 +20,6 @@ COPY requirements.txt /app
 RUN pip3 install setuptools
 RUN pip3 install -r requirements.txt
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
-
 COPY . /app
 
 # Clone and install CenterNet submodule
@@ -31,7 +28,7 @@ RUN git clone https://github.com/tteepe/CenterNet-pytorch-lightning.git lib \
     && git submodule update --init --recursive \
     && pip install -e .
 
-# Fix import for deprecated import:
+# Correct import for deprecated name:
 RUN sed -i 's/from DCN.dcn_v2 import DCN/from mmcv.ops.deform_conv import DeformConv2d as DCN/' lib/CenterNet/models/backbones/resnet_dcn.py
 RUN sed -i 's/from DCN.dcn_v2 import DCN/from mmcv.ops.deform_conv import DeformConv2d as DCN/' lib/CenterNet/models/backbones/pose_dla_dcn.py
 RUN sed -i 's/from collections import Callable/from collections.abc import Callable/' lib/CenterNet/transforms/sample.py
@@ -46,10 +43,9 @@ ARG LR=0.0004
 ARG BS=8
 ARG EPOCHS=20
 
-# Replace the problematic ENTRYPOINT with a shell script approach
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh && \
-    sed -i 's/\r$//' /app/entrypoint.sh  # Remove Windows line endings if present
+    sed -i 's/\r$//' /app/entrypoint.sh  # Makes sure there is no weird chars
 ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh"]
 
 # Define volume for data mounting

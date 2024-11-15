@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import torch
 import torchvision
@@ -83,17 +85,9 @@ class CenterNetBeeCenter(CenterNet):
 
     def forward(self, x):
         outputs = self.backbone(x)
-
-        # Modify to return only tensors/dicts of tensors
-        result = {}
-        for head, output in zip(self.heads, outputs):
-            head_outputs = head(output)
-            # Merge all head outputs into single dict
-            for k, v in head_outputs.items():
-                if k not in result:
-                    result[k] = v
-                else:
-                    result[k] = v
+        # For resnet18 backbone, we're sure there is only one stack
+        # and can avoid issues when generating Torchscript:
+        result = self.heads[0](outputs[0])
         return result
 
     @torch.jit.ignore
