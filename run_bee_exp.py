@@ -3,7 +3,7 @@ import os
 import yaml
 
 from torch.utils.data import DataLoader
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, Callback
+from pytorch_lightning.callbacks import Callback, ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.loggers import WandbLogger
 from torchvision.datasets import CocoDetection
 import imgaug as ia
@@ -52,7 +52,7 @@ class ExportTorchScriptCallback(Callback):
             print("No best model checkpoint found. TorchScript export skipped.")
 
 
-def run():
+def run(args):
     """
     Trains a CenterNet model on bee center detection data and export a torchscript file with
     the best found checkpoint.
@@ -63,22 +63,6 @@ def run():
     """
     pl.seed_everything(5318008)
     ia.seed(107734)
-
-    # ------------
-    # args
-    # ------------
-    parser = ArgumentParser()
-    parser.add_argument("--dataset_root")
-    parser.add_argument("--pretrained_weights_path")
-    parser.add_argument("--batch_size", default=16, type=int)
-    parser.add_argument("--epochs", default=20, type=int)
-    parser.add_argument("--num_workers", default=1, type=int)
-    parser.add_argument("--exp_config_path", type=str, default="config/exp_config.yaml",
-                        help="yaml config file containing exp constants like img dims")
-    parser.add_argument("--torchscript_output", type=str, default="trained_models/model.pt",
-                        help="Output path for TorchScript model (default: model.pt)")
-    parser = CenterNetBeeCenter.add_model_specific_args(parser)
-    args = parser.parse_args()
 
     with open(args.exp_config_path, 'r') as file:
         exp_config = yaml.safe_load(file)
@@ -119,11 +103,7 @@ def run():
     # model
     # ------------
     args.learning_rate_milestones = list(map(int, args.learning_rate_milestones.split(",")))
-    model = CenterNetBeeCenter(
-        exp_config, "res_18", # backbone preferred as constant here
-        args.learning_rate,
-        args.learning_rate_milestones,
-    )
+    model = CenterNetBeeCenter(exp_config, args.learning_rate, args.learning_rate_milestones)
     if args.pretrained_weights_path:
         model.load_pretrained_weights(args.pretrained_weights_path)
 
@@ -163,4 +143,17 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    parser = ArgumentParser()
+    parser.add_argument("--dataset_root")
+    parser.add_argument("--pretrained_weights_path")
+    parser.add_argument("--batch_size", default=16, type=int)
+    parser.add_argument("--epochs", default=20, type=int)
+    parser.add_argument("--num_workers", default=1, type=int)
+    parser.add_argument("--exp_config_path", type=str, default="config/exp_config.yaml",
+                        help="yaml config file containing exp constants like img dims")
+    parser.add_argument("--torchscript_output", type=str, default="trained_models/model.pt",
+                        help="Output path for TorchScript model (default: model.pt)")
+    parser = CenterNetBeeCenter.add_model_specific_args(parser)
+    args = parser.parse_args()
+    
+    run(args)

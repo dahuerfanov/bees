@@ -42,15 +42,15 @@ class CenterNetBeeCenter(CenterNet):
     def __init__(
         self,
         config,
-        arch="res_18",
         learning_rate=1e-4,
         learning_rate_milestones=None,
         hm_weight=1,
         off_weight=1,
     ):
-        super().__init__(arch)
+        super().__init__(config["model"]["backbone"])
 
         # Load config values
+        self.config = config
         self.mean = config["image"]["mean"]
         self.std = config["image"]["std"]
         self.img_aspect_ratio = config["image"]["aspect_ratio"]
@@ -61,6 +61,8 @@ class CenterNetBeeCenter(CenterNet):
         self.eps_correct_det = config["post_process"]["epsilon_correct_detection"]
 
         self.num_classes = 1 # bee class only
+        assert self.num_stacks == 1 # to ensure forward function specialization
+
         heads = {"heatmap": self.num_classes, "regression": 2}
         self.heads = torch.nn.ModuleList(
             [
@@ -85,7 +87,7 @@ class CenterNetBeeCenter(CenterNet):
 
     def forward(self, x):
         outputs = self.backbone(x)
-        # For resnet18 backbone, we're sure there is only one stack
+        # For the given backbone, we're sure there is only one stack
         # and can avoid issues when generating Torchscript:
         result = self.heads[0](outputs[0])
         return result
@@ -338,8 +340,9 @@ class CenterNetBeeCenter(CenterNet):
                                                                             roi_x:roi_x+roi_w]
         
         # Clamp heatmap values
-        heatmap_masked = 0.55 - np.clip(heatmap_masked, 0, 0.55)
-        ax2.imshow(heatmap_masked, cmap='hot', vmin=0, vmax=0.55)
+        max_confidence = self.config["visualization"]["heatmap_max"]
+        heatmap_masked = max_confidence - np.clip(heatmap_masked, 0, max_confidence)
+        ax2.imshow(heatmap_masked, cmap='hot', vmin=0, vmax=max_confidence)
         
         # Add legends and finalize plot
         ax1.legend()

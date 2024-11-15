@@ -1,6 +1,6 @@
 import argparse
-import yaml
 import os
+import yaml
 
 import cv2
 import matplotlib
@@ -57,8 +57,10 @@ def visualize_detections(img_tensor, outputs, config, detections, bee_count):
     heatmap_masked = np.zeros_like(heatmap)
     heatmap_masked[roi_y:roi_y+roi_h, roi_x:roi_x+roi_w] = heatmap[roi_y:roi_y+roi_h,
                                                                     roi_x:roi_x+roi_w]
-    heatmap_masked = 0.55 - np.clip(heatmap_masked, 0, 0.55)
-    ax2.imshow(heatmap_masked, cmap='Reds_r', vmin=0, vmax=0.55)
+    heatmap_masked = config["visualization"]["heatmap_max"] - \
+                        np.clip(heatmap_masked, 0, config["visualization"]["heatmap_max"])
+    ax2.imshow(heatmap_masked, cmap='Reds_r',
+               vmin=0, vmax=config["visualization"]["heatmap_max"])
     ax2.set_title('Heatmap')
 
     # Plot high confidence detections within ROI

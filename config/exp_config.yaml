@@ -11,6 +11,12 @@ detection:
   max_objects: 100
   valid_object_ids: [1]
 
+model:
+  backbone: 'res_18'
+
 # Post-processing Correction Parameter
 post_process:
   epsilon_correct_detection: 8  # in pixels
+
+visualization:
+  heatmap_max: 0.55 # max. heatmap temperature for better visualization
